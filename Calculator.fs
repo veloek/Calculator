@@ -15,13 +15,15 @@ let operation = (add <|> sub <|> mul <|> div)
 
 let pOperand, opRef = createParserForwardedToRef()
 
-let pExpr = pipe3 pOperand (operation .>> ws) pOperand (fun a op b ->
-    match op with
-    | '+' -> a + b
-    | '-' -> a - b
-    | '*' -> a * b
-    | '/' -> a / b
-    | _ -> 0.0)
+let pExpr = pipe2 pOperand (many ((operation .>> ws) .>>. pOperand)) (fun start ops ->
+    ops |> List.fold (fun a (op, b) ->
+        match op with
+        | '+' -> a + b
+        | '-' -> a - b
+        | '*' -> a * b
+        | '/' -> a / b
+        | _ -> 0.0) start
+    )
 
 do opRef := (braced pExpr <|> pfloat) .>> ws
 
